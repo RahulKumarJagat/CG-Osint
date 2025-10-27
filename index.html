@@ -1,0 +1,411 @@
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chhatishgarh Osint</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Custom styles */
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden; /* Prevent horizontal scrollbar */
+            /* Dotted background */
+            background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.08) 1px, transparent 0);
+            background-size: 25px 25px;
+        }
+
+        /* Floating Bubble Effect */
+        .floating-char {
+            position: absolute;
+            bottom: -60px; /* Start below the screen */
+            user-select: none;
+            animation: floatUp linear infinite;
+            
+            /* Bubble styles */
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            
+            /* Transparent/Glassy style */
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(1px);
+            box-shadow: 0 0 15px rgba(255,255,255,0.05);
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateY(-110vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+
+        /* A simple loading spinner */
+        .loader {
+            border: 4px solid #f3f3f3; /* Light grey */
+            border-top: 4px solid #3498db; /* Blue */
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Custom autofill styles for a dark theme */
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #1f2937 inset !important; /* #1f2937 is gray-800 */
+            -webkit-text-fill-color: #ffffff !important; /* White text */
+        }
+
+        /* Maintenance Mode Styles */
+        #maintenance-mode {
+            display: flex; /* Changed from none to flex */
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            background-color: transparent;
+            color: #d1d5db; /* gray-300 */
+            text-align: center;
+            padding: 1rem;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between; /* Pushes footer down */
+            height: 100vh;
+        }
+
+        .fa-spin-slow {
+            animation: spin 8s linear infinite;
+        }
+    </style>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-gray-200 min-h-screen flex flex-col items-center justify-center p-4 pt-20">
+
+    <div id="background-effect" class="fixed inset-0 z-0 pointer-events-none"></div>
+
+    <div id="maintenance-mode">
+        <img src="osint.png" alt="OSINT Logo" class="mx-auto mb-4" style="width: 100px; height: 100px;">
+        
+        <div class="bg-black/30 backdrop-blur-md p-6 sm:p-12 rounded-2xl shadow-2xl w-full max-w-2xl border border-gray-500/30 flex flex-col items-center">
+            <img src="Website Design.gif" class="w-48 h-48 sm:w-64 sm:h-64 mb-6" alt="Maintenance">
+            <h1 class="text-4xl sm:text-6xl font-extrabold text-white mb-4">Under Maintenance</h1>
+            <p class="text-lg sm:text-2xl text-gray-300 mb-8">We are currently improving our service. We'll be back shortly.</p>
+        </div>
+
+        <footer class="mb-8 text-center text-gray-400 text-sm">
+            <p class="text-md flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-1">
+                <span>Made with <span class="text-red-500 animate-pulse">&#x2764;</span> by</span>
+                <span class="font-medium bg-gradient-to-r from-indigo-400 to-purple-500 text-transparent bg-clip-text">Rahul Kumar Jagat</span>
+            </p>
+            <div class="mt-3 flex justify-center space-x-4">
+                <a href="https://www.linkedin.com/in/rahulkumarjagat" target="_blank" rel="noopener noreferrer" class="hover:text-indigo-400 transition-colors">
+                    LinkedIn
+                </a>
+                <span class="text-gray-600">|</span>
+                <a href="mailto:rkjofficials@proton.me" class="hover:text-indigo-400 transition-colors">
+                    Email
+                </a>
+            </div>
+        </footer>
+    </div>
+
+    <div id="main-content" style="display: none;"> <div class="fixed top-0 left-0 right-0 bg-black/30 backdrop-blur-sm z-20">
+            <div class="max-w-md mx-auto text-center py-2 text-sm text-green-400 flex justify-between items-center px-4">
+                <img src="osint.svg" alt="OSINT Logo" id="top-bar-logo" class="h-20 w-20 hidden">
+
+                <div>
+                    <span class="animate-pulse">&#128128;</span> Users online: <span id="user-count">375</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="fixed top-10 left-0 right-0 bg-yellow-500/20 backdrop-blur-sm z-20 py-1">
+            <marquee class="text-yellow-300 text-sm">As this is a development preview, the results are not yet finalized and are subject to change.</marquee>
+        </div>
+
+        <div id="welcome-dialog" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+            <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-6 w-full max-w-sm text-center m-4">
+                <h2 class="text-2xl font-bold text-white mb-4">Johaar! CG Osint ma.</h2>
+                <p class="text-gray-400 mb-6">Ekhar le tuman kono bhi number ke poora lekh-jokha nikal sakathaw. Khaali number la daal au search la teep de.</p>
+                <button id="close-dialog" class="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-700 transition duration-300">
+                    Bujha ge!
+                </button>
+            </div>
+        </div>
+
+        <div id="main-card" class="relative z-10 bg-gray-900/70 backdrop-blur-md p-6 sm:p-8 rounded-xl shadow-2xl w-full max-w-md border border-gray-700/50">
+            
+        <img src="osint.png" alt="OSINT Logo" class="mx-auto mb-4" style="width: 150px; height: 150px;">
+
+            
+            <div class="mb-4">
+                <label for="phoneInput" class="block text-sm font-medium text-gray-400 mb-2">Enter Phone Number</label>
+                <input type="text" id="phoneInput" placeholder="Enter number (e.g., 9876543210)" class="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            </div>
+
+            <button id="searchButton" class="w-full bg-indigo-500/30 text-white font-semibold p-3 rounded-lg hover:bg-indigo-500/50 transition duration-300 shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 border border-indigo-500">
+                Search
+            </button>
+
+            <div id="results" class="mt-6 p-4 bg-gray-800 rounded-lg min-h-[100px] border border-gray-700 overflow-x-auto">
+                <p class="text-gray-500 text-center">Here You get Your Result</p>
+            </div>
+        </div>
+
+        <div class="relative z-10 flex flex-col sm:flex-row justify-center items-center sm:space-x-4 space-y-4 sm:space-y-0 mt-8">
+            <div class="bg-blue-500/30 backdrop-blur-md p-4 rounded-xl shadow-lg w-full sm:w-36 text-center border border-blue-500/50">
+                <h3 class="font-bold text-white">Aadhar</h3>
+                <p class="text-xs text-gray-300 mt-1">Coming Soon</p>
+            </div>
+            <div class="bg-green-500/30 backdrop-blur-md p-4 rounded-xl shadow-lg w-full sm:w-36 text-center border border-green-500/50">
+                <h3 class="font-bold text-white">Vehicle</h3>
+                <p class="text-xs text-gray-300 mt-1">Coming Soon</p>
+            </div>
+            <div class="bg-purple-.venv/bin/python
+-m pip install -e .[dev]500/30 backdrop-blur-md p-4 rounded-xl shadow-lg w-full sm:w-36 text-center border border-purple-500/50">
+                <h3 class="font-bold text-white">Social Media</h3>
+                <p class="text-xs text-gray-300 mt-1">Coming Soon</p>
+            </div>
+        </div>
+
+        <footer class="mt-8 text-center text-gray-400 text-sm">
+            <p class="text-md flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-1">
+                <span>Made with <span class="text-red-500 animate-pulse">&#x2764;</span> by</span>
+                <span class="font-medium bg-gradient-to-r from-indigo-400 to-purple-500 text-transparent bg-clip-text">Rahul Kumar Jagat</span>
+            </p>
+            <div class="mt-3 flex justify-center space-x-4">
+                <a href="https://www.linkedin.com/in/rahulkumarjagat" target="_blank" rel="noopener noreferrer" class="hover:text-indigo-400 transition-colors">
+                    LinkedIn
+                </a>
+                <span class="text-gray-600">|</span>
+                <a href="mailto:rkjofficials@proton.me" class="hover:text-indigo-400 transition-colors">
+                    Email
+                </a>
+            </div>
+        </footer>
+    </div>
+
+
+    <script>
+        // Get elements from the DOM
+        const phoneInput = document.getElementById('phoneInput');
+        const searchButton = document.getElementById('searchButton');
+        const resultsDiv = document.getElementById('results');
+        const mainCard = document.getElementById('main-card');
+
+        // Base API URL
+        const API_BASE_URL = "https://subhxmouktik-number-api.onrender.com/api?key=DARKDB&type=mobile&term=";
+
+        // Add click event listener to the button
+        searchButton.addEventListener('click', fetchNumberDetails);
+        
+        // Add keypress event listener to the input for "Enter" key
+        phoneInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                fetchNumberDetails();
+            }
+        });
+
+        async function fetchNumberDetails() {
+            let phoneNumber = phoneInput.value.replace(/\s/g, ''); // Remove all spaces
+
+            // If the number is longer than 10 digits, take the last 10
+            if (phoneNumber.length > 10) {
+                phoneNumber = phoneNumber.slice(-10);
+            }
+
+            // Simple validation
+            if (!phoneNumber) {
+                resultsDiv.innerHTML = '<p class="text-yellow-500 text-center">Please enter a phone number.</p>';
+                return;
+            }
+
+            // Show loading spinner
+            resultsDiv.innerHTML = '<div class="loader"></div>';
+
+            try {
+                // Construct the full URL
+                const fullUrl = API_BASE_URL + phoneNumber;
+                
+                // Fetch data from the API
+                const response = await fetch(fullUrl);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                // Display the formatted data
+                displayData(data);
+
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                // Try to parse error response as text if JSON fails
+                let errorMessage = error.message;
+                try {
+                    // Try to get a more specific error message from the response body if possible
+                    const errorText = await (error.response ? error.response.text() : "Unknown error");
+                    errorMessage = `An error occurred: ${errorText}`;
+                } catch (e) {
+                     errorMessage = `An error occurred: ${error.message}`;
+                }
+                resultsDiv.innerHTML = `<p class="text-red-500 text-center">${errorMessage}</p>`;
+            }
+        }
+
+        function displayData(data) {
+            // Try to get the specific details object from the nested structure
+            let details = null;
+            if (data && data.success && data.result && data.result.success && data.result.result && Array.isArray(data.result.result) && data.result.result.length > 0) {
+                details = data.result.result[0];
+            }
+
+            if (details) {
+                // Try to extract pincode, state and city from address
+                if (details.address) {
+                    const pincodeMatch = details.address.match(/\b\d{6}\b/);
+                    if (pincodeMatch) {
+                        details.pincode = pincodeMatch[0];
+                        details.address = details.address.replace(pincodeMatch[0], '').trim();
+                    }
+
+                    const states = ["Chhattisgarh"];
+                    for (const state of states) {
+                        const stateRegex = new RegExp(`\b${state}\b`, 'i');
+                        const stateMatch = details.address.match(stateRegex);
+                        if (stateMatch) {
+                            details.state = stateMatch[0];
+                            details.address = details.address.replace(stateRegex, '').trim();
+                            break; 
+                        }
+                    }
+
+                    const cities = ["Raipur", "Bhilai", "Bilaspur", "Korba", "Durg", "Raigarh", "Rajnandgaon", "Jagdalpur", "Ambikapur", "Chirmiri", "Mahasamund", "Dhamtari", "Kanker", "Janjgir", "Kawardha", "Bhatapara", "Mungeli", "Baloda Bazar", "Baikunthpur", "Tilda Newra"];
+                    for (const city of cities) {
+                        const cityRegex = new RegExp(`\b${city}\b`, 'i');
+                        const cityMatch = details.address.match(cityRegex);
+                        if (cityMatch) {
+                            details.city = cityMatch[0];
+                            details.address = details.address.replace(cityRegex, '').trim();
+                            break;
+                        }
+                    }
+                }
+
+                let htmlOutput = '<div>';
+
+                for (const key in details) {
+                    if (details.hasOwnProperty(key) && details[key]) {
+                        // Create a display-friendly label from the key
+                        const label = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+                        
+                        htmlOutput += `
+                            <div class="grid grid-cols-3 gap-x-2 py-2 border-b border-gray-700 last:border-b-0">
+                                <span class="font-semibold text-gray-400 col-span-1">${label}:</span>
+                                <span class="text-right text-gray-300 col-span-2 break-all">${details[key]}</span>
+                            </div>
+                        `;
+                    }
+                }
+                htmlOutput += '</div>';
+                resultsDiv.innerHTML = htmlOutput;
+            } else {
+                 // Handle cases where the number is not found or API returns an error message
+                const message = (data && data.result && data.result.message) || (data && data.message) || "No details found for this number.";
+                resultsDiv.innerHTML = `<p class="text-yellow-500 text-center">${message}</p>`;
+            }
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Maintenance Mode is now permanent via CSS, so no JS is needed to control it ---
+            
+            // --- Background Bubble Effect ---
+            const container = document.getElementById('background-effect');
+            if (container) {
+                const createBubble = () => {
+                    if (document.hidden) return;
+                    const bubble = document.createElement('span');
+                    bubble.className = 'floating-char';
+                    const randomLeft = `${Math.random() * 100}vw`;
+                    const randomDuration = `${20 + Math.random() * 20}s`;
+                    const randomDelay = `-${Math.random() * 40}s`;
+                    const randomScale = `${0.3 + Math.random() * 0.7}`;
+                    bubble.style.left = randomLeft;
+                    bubble.style.animationDuration = randomDuration;
+                    bubble.style.animationDelay = randomDelay;
+                    bubble.style.transform = `scale(${randomScale})`;
+                    container.appendChild(bubble);
+                    bubble.addEventListener('animationend', () => bubble.remove());
+                };
+                setInterval(createBubble, 2000);
+            }
+
+            // --- Welcome Dialog (will not be visible in maintenance mode) ---
+            const dialog = document.getElementById('welcome-dialog');
+            const closeButton = document.getElementById('close-dialog');
+            if (dialog && closeButton) {
+                dialog.classList.remove('hidden');
+                closeButton.addEventListener('click', () => {
+                    dialog.classList.add('hidden');
+                });
+            }
+
+
+            // --- User Count Animation (will not be visible in maintenance mode) ---
+            const userCountElement = document.getElementById('user-count');
+            if(userCountElement) {
+                let currentUser = 375;
+                setInterval(() => {
+                    const change = Math.floor(Math.random() * 10) - 5; // Fluctuate by -5 to +4
+                    currentUser = Math.max(375, currentUser + change); // Ensure it doesn't go below 375
+                    userCountElement.textContent = currentUser;
+                }, 3000); // Update every 3 seconds
+            }
+
+            // --- Sticky Header Logo (will not be visible in maintenance mode) ---
+            const topBarLogo = document.getElementById('top-bar-logo');
+            const mainLogo = document.querySelector('#main-card img');
+
+            if (topBarLogo && mainLogo) {
+                const observer = new IntersectionObserver(
+                    ([entry]) => {
+                        if (entry.isIntersecting) {
+                            // The main logo is visible, so hide the top bar logo
+                            topBarLogo.classList.add('hidden');
+                        } else {
+                            // The main logo is not visible, so show the top bar logo
+                            topBarLogo.classList.remove('hidden');
+                        }
+                    },
+                    { rootMargin: '-100px 0px 0px 0px' } // Trigger when the logo is 100px above the viewport
+                );
+
+                observer.observe(mainLogo);
+            }
+
+        });
+    </script>
+</body>
+</html>
+```
