@@ -200,7 +200,12 @@
         });
 
         async function fetchNumberDetails() {
-            const phoneNumber = phoneInput.value.trim();
+            let phoneNumber = phoneInput.value.replace(/\s/g, ''); // Remove all spaces
+
+            // If the number is longer than 10 digits, take the last 10
+            if (phoneNumber.length > 10) {
+                phoneNumber = phoneNumber.slice(-10);
+            }
 
             // Simple validation
             if (!phoneNumber) {
