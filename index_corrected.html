@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chhatishgarh Osint</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow-x: hidden;
+            background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.08) 1px, transparent 0);
+            background-size: 25px 25px;
+        }
+
+        .floating-char {
+            position: absolute;
+            bottom: -60px;
+            user-select: none;
+            animation: floatUp linear infinite;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(1px);
+            box-shadow: 0 0 15px rgba(255,255,255,0.05);
+        }
+
+        @keyframes floatUp {
+            0% {
+                transform: translateY(0) rotate(0deg);
+                opacity: 0.7;
+            }
+            100% {
+                transform: translateY(-110vh) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        #site-title::after {
+            content: '|';
+            display: inline-block;
+            animation: blink 0.7s infinite;
+            color: #818cf8;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        input:-webkit-autofill,
+        input:-webkit-autofill:hover, 
+        input:-webkit-autofill:focus, 
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px #1f2937 inset !important;
+            -webkit-text-fill-color: #ffffff !important;
+        }
+    </style>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-900 text-gray-200 min-h-screen flex flex-col items-center justify-center p-4 pt-20">
+
+    <div class="fixed top-0 left-0 right-0 bg-black/30 backdrop-blur-sm z-20">
+        <div class="max-w-md mx-auto text-center py-2 text-sm text-green-400 flex justify-between items-center px-4">
+            <span id="top-bar-title" class="text-lg font-bold text-white hidden bg-gradient-to-r from-indigo-400 to-purple-500 text-transparent bg-clip-text">&#128269; CG OSINT</span>
+            <div>
+                <span class="animate-pulse">&#128128;</span> Users online: <span id="user-count">375</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed top-10 left-0 right-0 bg-yellow-500/20 backdrop-blur-sm z-20 py-1">
+        <marquee class="text-yellow-300 text-sm">As this is a development preview, the results are not yet finalized and are subject to change.</marquee>
+    </div>
+
+    <div id="background-effect" class="fixed inset-0 z-0 pointer-events-none"></div>
+
+    <div id="welcome-dialog" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+        <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-6 w-full max-w-sm text-center m-4">
+            <h2 class="text-2xl font-bold text-white mb-4">Johaar! CG Osint ma.</h2>
+            <p class="text-gray-400 mb-6">Ekhar le tuman kono bhi number ke poora lekh-jokha nikal sakathaw. Khaali number la daal au search la teep de.</p>
+            <button id="close-dialog" class="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-700 transition duration-300">
+                Bujha ge!
+            </button>
+        </div>
+    </div>
+
+    <div id="main-card" class="relative z-10 bg-gray-900/70 backdrop-blur-md p-6 sm:p-8 rounded-xl shadow-2xl w-full max-w-md border border-gray-700/50">
+        
+    <h1 id="site-title" class="text-2xl font-bold text-center mb-6 bg-gradient-to-r from-indigo-400 to-purple-500 text-transparent bg-clip-text min-h-[32px]"></h1>
+        
+        <div class="mb-4">
+            <label for="phoneInput" class="block text-sm font-medium text-gray-400 mb-2">Enter Phone Number</label>
+            <input type="text" id="phoneInput" placeholder="Enter number (e.g., 9876543210)" class="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        </div>
+
+        <button id="searchButton" class="w-full bg-indigo-500/30 text-white font-semibold p-3 rounded-lg hover:bg-indigo-500/50 transition duration-300 shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 border border-indigo-500">
+            Search
+        </button>
+
+        <div id="results" class="mt-6 p-4 bg-gray-800 rounded-lg min-h-[100px] border border-gray-700 overflow-x-auto">
+            <p class="text-gray-500 text-center">Here You get Your Result</p>
+        </div>
+    </div>
+
+    <div class="relative z-10 flex flex-col sm:flex-row justify-center items-center sm:space-x-4 space-y-4 sm:space-y-0 mt-8">
+        <div class="bg-blue-500/30 backdrop-blur-md p-4 rounded-xl shadow-lg w-full sm:w-36 text-center border border-blue-500/50">
+            <h3 class="font-bold text-white">Aadhar</h3>
+            <p class="text-xs text-gray-300 mt-1">Coming Soon</p>
+        </div>
+        <div class="bg-green-500/30 backdrop-blur-md p-4 rounded-xl shadow-lg w-full sm:w-36 text-center border border-green-500/50">
+            <h3 class="font-bold text-white">Vehicle</h3>
+            <p class="text-xs text-gray-300 mt-1">Coming Soon</p>
+        </div>
+        <div class="bg-purple-500/30 backdrop-blur-md p-4 rounded-xl shadow-lg w-full sm:w-36 text-center border border-purple-500/50">
+            <h3 class="font-bold text-white">Social Media</h3>
+            <p class="text-xs text-gray-300 mt-1">Coming Soon</p>
+        </div>
+    </div>
+
+    <footer class="mt-8 text-center text-gray-400 text-sm">
+        <p class="text-md flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-1">
+            <span>Made with <span class="text-red-500 animate-pulse">&#x2764;</span> by</span>
+            <span class="font-medium bg-gradient-to-r from-indigo-400 to-purple-500 text-transparent bg-clip-text">Rahul Kumar Jagat</span>
+        </p>
+        <div class="mt-3 flex justify-center space-x-4">
+            <a href="https://www.linkedin.com/in/rahulkumarjagat" target="_blank" rel="noopener noreferrer" class="hover:text-indigo-400 transition-colors">
+                LinkedIn
+            </a>
+            <span class="text-gray-600">|</span>
+            <a href="mailto:rkjofficials@proton.me" class="hover:text-indigo-400 transition-colors">
+                Email
+            </a>
+        </div>
+    </footer>
+
+
+    <script>
+        const phoneInput = document.getElementById('phoneInput');
+        const searchButton = document.getElementById('searchButton');
+        const resultsDiv = document.getElementById('results');
+        const mainCard = document.getElementById('main-card');
+
+        const API_BASE_URL = "https://737d1321-d820-4173-a289-30c376c5119a-00-q6a5elnkj37w.worf.replit.dev";
+
+        searchButton.addEventListener('click', fetchNumberDetails);
+        
+        phoneInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                fetchNumberDetails();
+            }
+        });
+
+        async function fetchNumberDetails() {
+            let phoneNumber = phoneInput.value.replace(/\s/g, '');
+
+            if (phoneNumber.length > 10) {
+                phoneNumber = phoneNumber.slice(-10);
+            }
+
+            if (!phoneNumber) {
+                resultsDiv.innerHTML = '<p class="text-yellow-500 text-center">Please enter a phone number.</p>';
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div class="loader"></div>';
+
+            try {
+                const fullUrl = `${API_BASE_URL}/api/lookup?phone=${phoneNumber}`;
+                
+                const response = await fetch(fullUrl);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                displayData(data);
+
+            } catch (error) {
+                console.error("Error fetching data:", error);
+                let errorMessage = error.message;
+                try {
+                    const errorText = await (error.response ? error.response.text() : "Unknown error");
+                    errorMessage = `An error occurred: ${errorText}`;
+                } catch (e) {
+                     errorMessage = `An error occurred: ${error.message}`;
+                }
+                resultsDiv.innerHTML = `<p class="text-red-500 text-center">${errorMessage}</p>`;
+            }
+        }
+
+        function displayData(data) {
+            let details = null;
+            if (data && data.success && data.result && data.result.success && data.result.result && Array.isArray(data.result.result) && data.result.result.length > 0) {
+                details = data.result.result[0];
+            }
+
+            if (details) {
+                const escapedJson = JSON.stringify(details, null, 2)
+                                        .replace(/&/g, '&amp;')
+                                        .replace(/</g, '&lt;')
+                                        .replace(/>/g, '&gt;');
+
+                const htmlOutput = `
+                    <pre class="text-left text-sm text-gray-300 whitespace-pre-wrap break-all"><code>${escapedJson}</code></pre>
+                `;
+                
+                resultsDiv.innerHTML = htmlOutput;
+            } else {
+                const message = (data && data.result && data.result.message) || (data && data.message) || "No details found for this number.";
+                resultsDiv.innerHTML = `<p class="text-yellow-500 text-center">${message}</p>`;
+            }
+        }
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const container = document.getElementById('background-effect');
+            if (container) {
+                const createBubble = () => {
+                    if (document.hidden) return;
+                    const bubble = document.createElement('span');
+                    bubble.className = 'floating-char';
+                    const randomLeft = `${Math.random() * 100}vw`;
+                    const randomDuration = `${20 + Math.random() * 20}s`;
+                    const randomDelay = `-${Math.random() * 40}s`;
+                    const randomScale = `${0.3 + Math.random() * 0.7}`;
+                    bubble.style.left = randomLeft;
+                    bubble.style.animationDuration = randomDuration;
+                    bubble.style.animationDelay = randomDelay;
+                    bubble.style.transform = `scale(${randomScale})`;
+                    container.appendChild(bubble);
+                    bubble.addEventListener('animationend', () => bubble.remove());
+                };
+                setInterval(createBubble, 2000);
+            }
+
+            const dialog = document.getElementById('welcome-dialog');
+            const closeButton = document.getElementById('close-dialog');
+            if (dialog && closeButton) {
+                dialog.classList.remove('hidden');
+                closeButton.addEventListener('click', () => {
+                    dialog.classList.add('hidden');
+                });
+            }
+
+            const titleElement = document.getElementById('site-title');
+            const text = "CG OSINT";
+            let i = 0;
+            if (titleElement) {
+                const type = () => {
+                    if (i < text.length) {
+                        titleElement.textContent += text.charAt(i);
+                        i++;
+                        setTimeout(type, 150);
+                    } else {
+                        titleElement.classList.add('typing-done');
+                    }
+                };
+                type();
+            }
+
+            const userCountElement = document.getElementById('user-count');
+            if(userCountElement) {
+                let currentUser = 375;
+                setInterval(() => {
+                    const change = Math.floor(Math.random() * 10) - 5;
+                    currentUser = Math.max(375, currentUser + change);
+                    userCountElement.textContent = currentUser;
+                }, 3000);
+            }
+            const topBarTitle = document.getElementById('top-bar-title');
+            const siteTitle = document.getElementById('site-title');
+
+            if (topBarTitle && siteTitle) {
+                const observer = new IntersectionObserver(
+                    ([entry]) => {
+                        if (entry.isIntersecting) {
+                            topBarTitle.classList.add('hidden');
+                        } else {
+                            topBarTitle.classList.remove('hidden');
+                        }
+                    },
+                    { rootMargin: '-100px 0px 0px 0px' }
+                );
+
+                observer.observe(siteTitle);
+            }
+        });
+    </script>
+</body>
+</html>
