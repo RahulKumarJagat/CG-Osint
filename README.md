@@ -45,11 +45,11 @@ To get a local copy up and running, follow these simple steps.
 
 1.  **Clone the repository:**
     ```sh
-    git clone [https://github.com/RahulKumarJagat/cg-osint.git](https://github.com/RahulKumarJagat/cg-osint.git)
+    git clone [https://github.com/RahulKumarJagat/CG-Osint.git](https://github.com/RahulKumarJagat/CG-Osint.git)
     ```
 2.  **Navigate to the directory:**
     ```sh
-    cd cg-osint
+    cd CG-Osint
     ```
 3.  **Open the application:**
     -   Simply open the `index.html` file in your favorite web browser.
