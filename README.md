@@ -2,7 +2,7 @@
 
 A web-based Open Source Intelligence (OSINT) tool designed for cybersecurity purposes to find publicly available information associated with phone numbers, focusing on the Chhattisgarh (CG) region of India.
 
-![App Screenshot](link_to_your_screenshot.png) ---
+![App Screenshot](cgosint.png) ---
 
 ## 📝 About The Project
 
