@@ -451,10 +451,10 @@
                 let errorMessage = error.message;
                 try {
                     // Try to get a more specific error message from the response body if possible
-                    const errorText = await (error.response ? error.response.text() : "Unknown error");
-                    errorMessage = `An error occurred: ${errorText}`;
+                    const errorText = await (error.response ? error.response.text() : "Server is busy right now. Please try again later.");
+                    errorMessage = `${errorText}`;
                 } catch (e) {
-                     errorMessage = `An error occurred: ${error.message}`;
+                     errorMessage = `${error.message}`;
                 }
                 resultsDiv.innerHTML = `<p class="text-red-500 text-center">${errorMessage}</p>`;
             }
