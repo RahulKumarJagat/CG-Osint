@@ -9,14 +9,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
     <style>
         /* Custom styles */
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Roboto', sans-serif;
             overflow-x: hidden; /* Prevent horizontal scrollbar */
             /* Dotted background */
             background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.08) 1px, transparent 0);
             background-size: 25px 25px;
+        }
+
+        .font-sans {
+            font-family: 'Poppins', sans-serif;
         }
 
         /* Floating Bubble Effect */
@@ -93,32 +100,67 @@
         .fa-spin-slow {
             animation: spin 8s linear infinite;
         }
+        #phoneInput:hover, #searchButton:hover, .info-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        #results {
+            display: none;
+        }
+
+        @keyframes fadeInAndGlow {
+            0% {
+                opacity: 0;
+                text-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #00ff00;
+            }
+            50% {
+                opacity: 0.5;
+                text-shadow: 0 0 15px #fff, 0 0 25px #fff, 0 0 35px #00ff00;
+            }
+            100% {
+                opacity: 1;
+                text-shadow: none;
+            }
+        }
+
+        .result-row {
+            animation: fadeInAndGlow 1s ease-out;
+        }
     </style>
     
     <!-- Google Font -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 </head>
-<body class="bg-gray-900 text-gray-200 min-h-screen flex flex-col items-center justify-center p-4 pt-20">
+<body class="bg-gray-900 text-gray-200 min-h-screen flex flex-col items-center justify-center p-4 pt-24">
 
     <div id="background-effect" class="fixed inset-0 z-0 pointer-events-none"></div>
 
-    <div id="maintenance-mode">
+    <div id="login-container" class="relative z-10 bg-gray-900/70 backdrop-blur-md p-6 sm:p-8 rounded-xl shadow-2xl w-full max-w-md border border-gray-700/50 text-center">
+        <h1 class="text-4xl font-bold text-white mb-4 font-sans">Welcome</h1>
+        <img src="osint.png" alt="OSINT Logo" class="mx-auto mb-4" style="width: 150px; height: auto;">
+        <p class="text-gray-400 mb-6">Please login to continue</p>
+        <button id="login-btn" class="w-full bg-indigo-500/30 text-white font-semibold p-3 rounded-lg hover:bg-indigo-500/50 transition-transform duration-200 shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 border border-indigo-500 font-sans">
+            <i class="fab fa-google mr-2"></i> Login with Google
+        </button>
+    </div>
+
+    <div id="maintenance-mode" style="display: none;">
                 <img src="osint.png" alt="OSINT Logo" class="mx-auto mb-4" style="width: 150px; height: auto;">
         
         <div class="bg-black/30 backdrop-blur-md p-6 sm:p-12 rounded-2xl shadow-2xl w-full max-w-2xl border border-gray-500/30 flex flex-col items-center">
             <img src="Website Design.gif" class="w-48 h-48 sm:w-64 sm:h-64 mb-6" alt="Maintenance">
-            <h1 class="text-4xl sm:text-6xl font-extrabold text-white mb-4">Under Maintenance</h1>
+            <h1 class="text-4xl sm:text-6xl font-extrabold text-white mb-4 font-sans">Under Maintenance</h1>
             <p class="text-lg sm:text-2xl text-gray-300 mb-8">We are currently improving our service. We'll be back shortly.</p>
             <div id="admin-login-prompt" style="display: none;">
-                <button id="disable-maintenance-btn" class="bg-red-600 text-white font-semibold py-3 px-8 rounded-lg hover:bg-red-700 transition duration-300 shadow-lg">
+                <button id="disable-maintenance-btn" class="bg-red-600 text-white font-semibold py-3 px-8 rounded-lg hover:bg-red-700 transition duration-300 shadow-lg font-sans">
                     Disable Maintenance Mode
                 </button>
             </div>
         </div>
 
-        <footer class="mb-8 text-center text-gray-400 text-sm">
+        <footer class="mb-8 text-center text-gray-400 text-sm font-sans">
             <p class="text-md flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-1">
                 <span>Made with <span class="text-red-500 animate-pulse">&#x2764;</span> by</span>
                 <span class="font-medium bg-gradient-to-r from-indigo-400 to-purple-500 text-transparent bg-clip-text">Rahul Kumar Jagat</span>
@@ -135,29 +177,103 @@
         </footer>
     </div>
 
-    <div id="main-content">
+    <div id="main-content" style="display: none;">
         <!-- Top Bar -->
         <div class="fixed top-0 left-0 right-0 bg-black/30 backdrop-blur-sm z-20">
-            <div class="max-w-md mx-auto text-center py-2 text-sm text-green-400 flex justify-between items-center px-4">
-                <img src="osint.png" alt="OSINT Logo" id="top-bar-logo" class="h-8 w-8 hidden">
-
-                <div>
-                    <span class="animate-pulse">&#128128;</span> Users online: <span id="user-count">375</span>
+            <div class="max-w-4xl mx-auto flex justify-between items-center py-2 px-4">
+                <img src="osint.png" alt="OSINT Logo" class="h-8" style="width: auto;">
+                <div class="flex items-center space-x-4">
+                    <div id="credits-display" class="text-white font-semibold flex items-center" title="Remaining Credits">
+                        <i class="fas fa-coins mr-2"></i>
+                        <span></span>
+                    </div>
+                    <button id="profile-btn" title="Profile" class="w-10 h-10 rounded-full overflow-hidden border-2 border-gray-600 hover:border-gray-400 transition duration-300">
+                        <img id="profile-avatar" src="" alt="Profile" class="w-full h-full object-cover">
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- Scrolling Message -->
-        <div class="fixed top-10 left-0 right-0 bg-yellow-500/20 backdrop-blur-sm z-20 py-1">
-            <marquee class="text-yellow-300 text-sm">As this is a development preview, the results are not yet finalized and are subject to change.</marquee>
+        <!-- Profile Modal -->
+        <div id="profile-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+            <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-6 w-full max-w-sm text-center m-4 relative">
+                <button id="close-profile-modal-btn" class="absolute top-2 right-2 text-gray-400 hover:text-white text-2xl">&times;</button>
+                <h2 class="text-2xl font-bold text-white mb-4 font-sans">Profile</h2>
+                <img id="modal-user-avatar" class="w-24 h-24 rounded-full mx-auto mb-4" alt="User Avatar">
+                <p id="modal-user-name" class="text-white font-semibold text-lg"></p>
+                <p id="user-type" class="text-gray-400 mb-4"></p>
+                <div class="flex justify-center space-x-4 mt-4">
+                    <button id="history-btn-modal" class="text-gray-400 hover:text-white transition duration-300">
+                        <i class="fas fa-history text-2xl"></i>
+                        <span class="block text-sm">History</span>
+                    </button>
+                    <button id="logout-btn-modal" class="text-gray-400 hover:text-white transition duration-300">
+                        <i class="fas fa-sign-out-alt text-2xl"></i>
+                        <span class="block text-sm">Logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Modal -->
+        <div id="history-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+            <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-6 w-full max-w-md text-center m-4 relative">
+                <button id="close-history-modal-btn" class="absolute top-2 right-2 text-gray-400 hover:text-white text-2xl">&times;</button>
+                <h2 class="text-2xl font-bold text-white mb-4 font-sans">Search History</h2>
+                <div id="history-list-modal" class="bg-gray-800 rounded-lg p-4 border border-gray-700 max-h-64 overflow-y-auto">
+                    <!-- History items will be added here -->
+                </div>
+                <button id="clear-history-modal-btn" class="mt-4 bg-red-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-red-700 transition duration-300 font-sans">Clear History</button>
+            </div>
+        </div>
+
+        <!-- History Details Modal -->
+        <div id="history-details-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+            <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-6 w-full max-w-md text-center m-4 relative">
+                <button id="close-history-details-modal-btn" class="absolute top-2 right-2 text-gray-400 hover:text-white text-2xl">&times;</button>
+                <h2 class="text-2xl font-bold text-white mb-4 font-sans">History Details</h2>
+                <div id="history-details-content" class="text-left"></div>
+            </div>
+        </div>
+
+        <!-- Subscription Modal -->
+        <div id="subscription-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
+            <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-6 w-full max-w-lg text-center m-4 relative">
+                <button id="close-subscription-modal-btn" class="absolute top-2 right-2 text-gray-400 hover:text-white text-2xl">&times;</button>
+                <h2 class="text-2xl font-bold text-white mb-4 font-sans">Unlock Premium Features</h2>
+                <div class="flex justify-around items-center mb-6">
+                    <label class="p-4 border border-gray-600 rounded-lg cursor-pointer">
+                        <input type="radio" name="plan" value="monthly" class="hidden">
+                        <h3 class="text-xl font-bold">Monthly</h3>
+                        <p class="text-3xl font-bold">₹599</p>
+                        <p class="text-gray-400">per month</p>
+                    </label>
+                    <label class="p-4 border border-green-500 rounded-lg bg-green-500/10 cursor-pointer">
+                        <input type="radio" name="plan" value="yearly" class="hidden" checked>
+                        <h3 class="text-xl font-bold">Yearly</h3>
+                        <p class="text-3xl font-bold">₹5391</p>
+                        <p class="text-gray-400">per year (25% off)</p>
+                    </label>
+                </div>
+                <img src="qr.jpg" alt="QR Code" class="mx-auto mb-4 w-48 h-48">
+                <p class="text-gray-400 mb-4">Scan the QR code to pay, then enter the transaction ID below.</p>
+                <div id="payment-pending" class="hidden">
+                    <p class="text-yellow-500 font-bold mb-2">Your request is pending approval.</p>
+                    <p>We will notify you once the admin has verified your transaction.</p>
+                </div>
+                <div id="payment-form">
+                    <input type="text" id="transaction-id-input" placeholder="Enter Transaction ID" class="w-full p-3 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    <button id="submit-transaction-btn" class="mt-4 w-full bg-indigo-600 text-white font-semibold p-3 rounded-lg hover:bg-indigo-700 transition duration-300">Submit</button>
+                </div>
+            </div>
         </div>
 
         <!-- Welcome Dialog -->
         <div id="welcome-dialog" class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm hidden">
             <div class="bg-gray-800 border border-gray-700 rounded-xl shadow-2xl p-6 w-full max-w-sm text-center m-4">
-                <h2 class="text-2xl font-bold text-white mb-4">Johaar! CG Osint ma.</h2>
+                <h2 class="text-2xl font-bold text-white mb-4 font-sans">Johaar! CG Osint ma.</h2>
                 <p class="text-gray-400 mb-6">Ekhar le tuman kono bhi number ke poora lekh-jokha nikal sakathaw. Khaali number la daal au search la teep de.</p>
-                <button id="close-dialog" class="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-700 transition duration-300">
+                <button id="close-dialog" class="bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-700 transition duration-300 font-sans">
                     Bujha ge!
                 </button>
             </div>
@@ -171,12 +287,12 @@
             
             <!-- Input Group -->
             <div class="mb-4">
-                <label for="phoneInput" class="block text-sm font-medium text-gray-400 mb-2">Enter Phone Number</label>
-                <input type="text" id="phoneInput" placeholder="Enter number (e.g., 9876543210)" class="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                <label for="phoneInput" class="block text-sm font-medium text-gray-400 mb-2 font-sans">Enter Phone Number</label>
+                <input type="tel" id="phoneInput" placeholder="Enter number (e.g., 9876543210)" class="w-full p-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-transform duration-200 font-sans" minlength="10" pattern="[0-9]{10,}">
             </div>
 
             <!-- Search Button -->
-            <button id="searchButton" class="w-full bg-indigo-500/30 text-white font-semibold p-3 rounded-lg hover:bg-indigo-500/50 transition duration-300 shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 border border-indigo-500">
+            <button id="searchButton" class="w-full bg-indigo-500/30 text-white font-semibold p-3 rounded-lg hover:bg-indigo-500/50 transition-transform duration-200 shadow-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900 border border-indigo-500 font-sans">
                 Search
             </button>
 
@@ -189,25 +305,33 @@
         <!-- Tools Menu -->
         <div class="relative z-10 flex flex-col sm:flex-row justify-center items-center sm:space-x-4 space-y-4 sm:space-y-0 mt-8">
             <!-- Aadhar Card -->
-            <div class="bg-blue-500/30 backdrop-blur-md p-4 rounded-xl shadow-lg w-full sm:w-36 text-center border border-blue-500/50">
-                <h3 class="font-bold text-white">Aadhar</h3>
-                <p class="text-xs text-gray-300 mt-1">Coming Soon</p>
+            <div id="aadhar-card" class="info-card bg-blue-500/30 backdrop-blur-md p-4 rounded-xl shadow-lg w-full sm:w-36 text-center border border-blue-500/50 transition-transform duration-200 cursor-pointer">
+                <h3 class="font-bold text-white font-sans">Aadhar</h3>
+                <div class="flex items-center justify-center text-yellow-400 mt-2">
+                    <i class="fas fa-lock mr-2"></i>
+                    <span>Paid</span>
+                </div>
             </div>
             <!-- Vehicle Card -->
-            <div class="bg-green-500/30 backdrop-blur-md p-4 rounded-xl shadow-lg w-full sm:w-36 text-center border border-green-500/50">
-                <h3 class="font-bold text-white">Vehicle</h3>
-                <p class="text-xs text-gray-300 mt-1">Coming Soon</p>
+            <div id="vehicle-card" class="info-card bg-green-500/30 backdrop-blur-md p-4 rounded-xl shadow-lg w-full sm:w-36 text-center border border-green-500/50 transition-transform duration-200 cursor-pointer">
+                <h3 class="font-bold text-white font-sans">Vehicle</h3>
+                <div class="flex items-center justify-center text-yellow-400 mt-2">
+                    <i class="fas fa-lock mr-2"></i>
+                    <span>Paid</span>
+                </div>
             </div>
             <!-- Social Media Card -->
-            <div class="bg-purple-.venv/bin/python
--m pip install -e .[dev]500/30 backdrop-blur-md p-4 rounded-xl shadow-lg w-full sm:w-36 text-center border border-purple-500/50">
-                <h3 class="font-bold text-white">Social Media</h3>
-                <p class="text-xs text-gray-300 mt-1">Coming Soon</p>
+            <div id="social-media-card" class="info-card bg-purple-500/30 backdrop-blur-md p-4 rounded-xl shadow-lg w-full sm:w-36 text-center border border-purple-500/50 transition-transform duration-200 cursor-pointer">
+                <h3 class="font-bold text-white font-sans">Social Media</h3>
+                <div class="flex items-center justify-center text-yellow-400 mt-2">
+                    <i class="fas fa-lock mr-2"></i>
+                    <span>Paid</span>
+                </div>
             </div>
         </div>
 
         <!-- Footer -->
-        <footer class="mt-8 text-center text-gray-400 text-sm">
+        <footer class="mt-8 text-center text-gray-400 text-sm font-sans">
             <p class="text-md flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-1">
                 <span>Made with <span class="text-red-500 animate-pulse">&#x2764;</span> by</span>
                 <span class="font-medium bg-gradient-to-r from-indigo-400 to-purple-500 text-transparent bg-clip-text">Rahul Kumar Jagat</span>
@@ -222,7 +346,7 @@
                 </a>
             </div>
             <div id="admin-controls" style="display: none;" class="mt-4">
-                <button id="maintenance-btn" class="bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-yellow-700 transition duration-300">
+                <button id="maintenance-btn" class="bg-yellow-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-yellow-700 transition duration-300 font-sans">
                     Enable Maintenance Mode
                 </button>
             </div>
@@ -236,6 +360,10 @@
         const searchButton = document.getElementById('searchButton');
         const resultsDiv = document.getElementById('results');
         const mainCard = document.getElementById('main-card');
+
+        phoneInput.addEventListener('input', () => {
+            phoneInput.value = phoneInput.value.replace(/[^0-9]/g, '');
+        });
 
         // Base API URL
         const API_BASE_URL = "https://subhxmouktik-number-api.onrender.com/api?key=DARKDB&type=mobile&term=";
@@ -251,6 +379,24 @@
         });
 
         async function fetchNumberDetails() {
+            const isPremium = localStorage.getItem('premiumUser') === 'true';
+            const today = new Date().toLocaleDateString();
+            const user = auth.currentUser;
+            const usageKey = user ? `usage_${user.uid}` : 'usage';
+            let usage = JSON.parse(localStorage.getItem(usageKey)) || { date: today, count: 0 };
+
+            if (!isPremium) {
+                if (usage.date !== today) {
+                    usage = { date: today, count: 0 };
+                }
+
+                if (usage.count >= 5) {
+                    resultsDiv.style.display = 'block';
+                    resultsDiv.innerHTML = '<p class="text-red-500 text-center">You have reached your daily limit of 5 free credits.</p>';
+                    return;
+                }
+            }
+
             let phoneNumber = phoneInput.value.replace(/\s/g, ''); // Remove all spaces
 
             // If the number is longer than 10 digits, take the last 10
@@ -259,12 +405,14 @@
             }
 
             // Simple validation
-            if (!phoneNumber) {
-                resultsDiv.innerHTML = '<p class="text-yellow-500 text-center">Please enter a phone number.</p>';
+            if (!phoneNumber || phoneNumber.length < 10) {
+                resultsDiv.style.display = 'block';
+                resultsDiv.innerHTML = '<p class="text-yellow-500 text-center">Please enter a valid 10-digit phone number.</p>';
                 return;
             }
 
-            // Show loading spinner
+            // Show loading spinner and results box
+            resultsDiv.style.display = 'block';
             resultsDiv.innerHTML = '<div class="loader"></div>';
 
             try {
@@ -281,7 +429,21 @@
                 const data = await response.json();
 
                 // Display the formatted data
-                displayData(data);
+                displayDataInElement(data, resultsDiv);
+
+                if (!isPremium) {
+                    usage.count++;
+                    localStorage.setItem(usageKey, JSON.stringify(usage));
+                    updateCreditsDisplay();
+                }
+
+                if (user) {
+                    db.collection('users').doc(user.uid).collection('history').add({
+                        number: phoneNumber,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        details: data
+                    });
+                }
 
             } catch (error) {
                 console.error("Error fetching data:", error);
@@ -298,8 +460,9 @@
             }
         }
 
-        function displayData(data) {
-            // Try to get the specific details object from the nested structure
+        function displayDataInElement(data, element) {
+            element.innerHTML = ''; // Clear previous results
+
             let details = null;
             if (data && data.success && data.result && data.result.success && data.result.result && Array.isArray(data.result.result) && data.result.result.length > 0) {
                 details = data.result.result[0];
@@ -346,20 +509,97 @@
                         
                         htmlOutput += `
                             <div class="grid grid-cols-3 gap-x-2 py-2 border-b border-gray-700 last:border-b-0">
-                                <span class="font-semibold text-gray-400 col-span-1">${label}:</span>
+                                <span class="font-semibold text-gray-400 col-span-1 font-sans">${label}:</span>
                                 <span class="text-right text-gray-300 col-span-2 break-all">${details[key]}</span>
                             </div>
                         `;
                     }
                 }
                 htmlOutput += '</div>';
-                resultsDiv.innerHTML = htmlOutput;
+                
+                element.innerHTML = htmlOutput;
+
             } else {
                  // Handle cases where the number is not found or API returns an error message
                 const message = (data && data.result && data.result.message) || (data && data.message) || "No details found for this number.";
-                resultsDiv.innerHTML = `<p class="text-yellow-500 text-center">${message}</p>`;
+                element.innerHTML = `<p class="text-yellow-500 text-center font-sans">${message}</p>`;
             }
         }
+
+        function displayHistory() {
+            const user = auth.currentUser;
+            if (user) {
+                db.collection('users').doc(user.uid).collection('history').orderBy('timestamp', 'desc').limit(10).onSnapshot(querySnapshot => {
+                    const history = [];
+                    querySnapshot.forEach(doc => {
+                        history.push(doc.data());
+                    });
+
+                    const historyListModal = document.getElementById('history-list-modal');
+                    historyListModal.innerHTML = '';
+                    if (history.length === 0) {
+                        historyListModal.innerHTML = '<p class="text-gray-500 text-center">No history yet.</p>';
+                        return;
+                    }
+                    history.forEach((item, index) => {
+                        const historyItem = document.createElement('div');
+                        historyItem.className = 'flex justify-between items-center py-2 border-b border-gray-700 last:border-b-0 cursor-pointer hover:bg-gray-700';
+                        historyItem.innerHTML = `
+                            <span class="text-gray-300">${item.number}</span>
+                            <span class="text-gray-500 text-sm">${new Date(item.timestamp.seconds * 1000).toLocaleString()}</span>
+                        `;
+                        historyItem.addEventListener('click', () => showHistoryDetails(item.details));
+                        historyListModal.appendChild(historyItem);
+                    });
+                });
+            }
+        }
+
+        function showHistoryDetails(details) {
+            const historyDetailsContent = document.getElementById('history-details-content');
+            displayDataInElement(details, historyDetailsContent);
+
+            const historyDetailsModal = document.getElementById('history-details-modal');
+            historyDetailsModal.classList.remove('hidden');
+        }
+
+        function clearHistory() {
+            const user = auth.currentUser;
+            if (user) {
+                const batch = db.batch();
+                db.collection('users').doc(user.uid).collection('history').get()
+                    .then(querySnapshot => {
+                        querySnapshot.forEach(doc => {
+                            batch.delete(doc.ref);
+                        });
+                        return batch.commit();
+                    });
+            }
+        }
+
+        function updateCreditsDisplay() {
+            const isPremium = localStorage.getItem('premiumUser') === 'true';
+            const creditsDisplaySpan = document.getElementById('credits-display').querySelector('span');
+            if (isPremium) {
+                creditsDisplaySpan.textContent = 'Premium';
+                return;
+            }
+
+            const today = new Date().toLocaleDateString();
+            const user = auth.currentUser;
+            if (!user) return;
+            const usageKey = `usage_${user.uid}`;
+            let usage = JSON.parse(localStorage.getItem(usageKey)) || { date: today, count: 0 };
+
+            if (usage.date !== today) {
+                usage = { date: today, count: 0 };
+                localStorage.setItem(usageKey, JSON.stringify(usage));
+            }
+
+            const remainingCredits = 5 - usage.count;
+            creditsDisplaySpan.textContent = remainingCredits;
+        }
+
     </script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -405,22 +645,66 @@
             // --- Background Bubble Effect ---
             const container = document.getElementById('background-effect');
             if (container) {
+                const BUBBLE_COUNT = 10;
+                const BUBBLE_SIZE = 40; // Corresponds to width/height in CSS
+
                 const createBubble = () => {
                     if (document.hidden) return;
+
                     const bubble = document.createElement('span');
                     bubble.className = 'floating-char';
-                    const randomLeft = `${Math.random() * 100}vw`;
+
+                    // --- Non-overlapping logic ---
+                    let positionFound = false;
+                    let randomLeft;
+                    let attempts = 0;
+                    const maxAttempts = 50;
+
+                    while (!positionFound && attempts < maxAttempts) {
+                        randomLeft = Math.random() * (window.innerWidth - BUBBLE_SIZE);
+                        let overlap = false;
+                        const existingBubbles = container.children;
+                        for (let i = 0; i < existingBubbles.length; i++) {
+                            const existing = existingBubbles[i];
+                            const existingLeft = parseFloat(existing.style.left);
+                            if (Math.abs(randomLeft - existingLeft) < BUBBLE_SIZE) {
+                                overlap = true;
+                                break;
+                            }
+                        }
+                        if (!overlap) {
+                            positionFound = true;
+                        }
+                        attempts++;
+                    }
+                    // If we can't find a spot after many attempts, just place it randomly
+                    if (!positionFound) {
+                        randomLeft = Math.random() * (window.innerWidth - BUBBLE_SIZE);
+                    }
+                    // --- End of non-overlapping logic ---
+
+
                     const randomDuration = `${20 + Math.random() * 20}s`;
-                    const randomDelay = `-${Math.random() * 40}s`;
+                    const randomDelay = `-${Math.random() * 20}s`; // Start at various points in the animation
                     const randomScale = `${0.3 + Math.random() * 0.7}`;
-                    bubble.style.left = randomLeft;
+
+                    bubble.style.left = `${randomLeft}px`;
                     bubble.style.animationDuration = randomDuration;
                     bubble.style.animationDelay = randomDelay;
                     bubble.style.transform = `scale(${randomScale})`;
+
+                    bubble.addEventListener('animationend', () => {
+                        bubble.remove();
+                        createBubble(); // Create a new one when one finishes
+                    });
+
                     container.appendChild(bubble);
-                    bubble.addEventListener('animationend', () => bubble.remove());
                 };
-                setInterval(createBubble, 2000);
+
+                // Initial bubble creation
+                for (let i = 0; i < BUBBLE_COUNT; i++) {
+                    createBubble();
+                }
             }
 
             // --- Welcome Dialog ---
@@ -433,40 +717,164 @@
                 });
             }
 
+            const subscriptionModal = document.getElementById('subscription-modal');
+            const closeSubscriptionModalBtn = document.getElementById('close-subscription-modal-btn');
+            const verifyPaymentBtn = document.getElementById('verify-payment-btn');
+            const paymentSuccess = document.getElementById('payment-success');
+            const paymentForm = document.getElementById('payment-form');
+            const transactionId = document.getElementById('transaction-id');
 
-            // --- User Count Animation ---
-            const userCountElement = document.getElementById('user-count');
-            if(userCountElement) {
-                let currentUser = 375;
-                setInterval(() => {
-                    const change = Math.floor(Math.random() * 10) - 5; // Fluctuate by -5 to +4
-                    currentUser = Math.max(375, currentUser + change); // Ensure it doesn't go below 375
-                    userCountElement.textContent = currentUser;
-                }, 3000); // Update every 3 seconds
+            const aadharCard = document.getElementById('aadhar-card');
+            const vehicleCard = document.getElementById('vehicle-card');
+            const socialMediaCard = document.getElementById('social-media-card');
+
+            const planRadios = document.querySelectorAll('input[name="plan"]');
+            planRadios.forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    planRadios.forEach(r => {
+                        const parentLabel = r.parentElement;
+                        parentLabel.classList.remove('border-green-500', 'bg-green-500/10');
+                        parentLabel.classList.add('border-gray-600');
+                    });
+                    const selectedLabel = e.target.parentElement;
+                    selectedLabel.classList.add('border-green-500', 'bg-green-500/10');
+                    selectedLabel.classList.remove('border-gray-600');
+                });
+            });
+
+            function openSubscriptionModal() {
+                if (localStorage.getItem('premiumUser') === 'true') {
+                    alert('This feature is already unlocked!');
+                } else {
+                    subscriptionModal.classList.remove('hidden');
+                }
             }
 
-            // --- Sticky Header Logo ---
-            const topBarLogo = document.getElementById('top-bar-logo');
-            const mainLogo = document.querySelector('#main-card img');
+            aadharCard.addEventListener('click', openSubscriptionModal);
+            vehicleCard.addEventListener('click', openSubscriptionModal);
+            socialMediaCard.addEventListener('click', openSubscriptionModal);
 
-            if (topBarLogo && mainLogo) {
-                const observer = new IntersectionObserver(
-                    ([entry]) => {
-                        if (entry.isIntersecting) {
-                            // The main logo is visible, so hide the top bar logo
-                            topBarLogo.classList.add('hidden');
-                        } else {
-                            // The main logo is not visible, so show the top bar logo
-                            topBarLogo.classList.remove('hidden');
-                        }
-                    },
-                    { rootMargin: '-100px 0px 0px 0px' } // Trigger when the logo is 100px above the viewport
-                );
+            closeSubscriptionModalBtn.addEventListener('click', () => subscriptionModal.classList.add('hidden'));
 
-                observer.observe(mainLogo);
-            }
+            const submitTransactionBtn = document.getElementById('submit-transaction-btn');
+            const paymentPending = document.getElementById('payment-pending');
+
+            submitTransactionBtn.addEventListener('click', () => {
+                const user = auth.currentUser;
+                const transactionIdInput = document.getElementById('transaction-id-input');
+                const transactionId = transactionIdInput.value;
+                const selectedPlan = document.querySelector('input[name="plan"]:checked').value;
+
+                if (user && transactionId) {
+                    db.collection('transactions').add({
+                        userId: user.uid,
+                        userEmail: user.email,
+                        transactionId: transactionId,
+                        plan: selectedPlan,
+                        status: 'pending',
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    }).then(() => {
+                        paymentForm.style.display = 'none';
+                        paymentPending.style.display = 'block';
+                    }).catch(error => {
+                        console.error("Error writing document: ", error);
+                        alert('There was an error submitting your request. Please try again.');
+                    });
+                } else {
+                    alert('Please enter a valid transaction ID.');
+                }
+            });
 
         });
+    </script>
+    <script>
+        // Your web app's Firebase configuration
+        const firebaseConfig = {
+    apiKey: "AIzaSyDErYzRgUHDZEu8lUKEWTbHV7stq00o7-0",
+    authDomain: "osint-c639f.firebaseapp.com",
+    projectId: "osint-c639f",
+    storageBucket: "osint-c639f.firebasestorage.app",
+    messagingSenderId: "862751236937",
+    appId: "1:862751236937:web:3c3bf209aa3aaac7e0b098",
+    measurementId: "G-7XK9W3KPS6"
+  };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        const loginBtn = document.getElementById('login-btn');
+        const loginContainer = document.getElementById('login-container');
+        const mainContent = document.getElementById('main-content');
+        const profileBtn = document.getElementById('profile-btn');
+        const historyBtn = document.getElementById('history-btn-modal');
+        const logoutBtn = document.getElementById('logout-btn-modal');
+        const profileModal = document.getElementById('profile-modal');
+        const historyModal = document.getElementById('history-modal');
+        const closeProfileModalBtn = document.getElementById('close-profile-modal-btn');
+        const closeHistoryModalBtn = document.getElementById('close-history-modal-btn');
+        const modalUserAvatar = document.getElementById('modal-user-avatar');
+        const modalUserName = document.getElementById('modal-user-name');
+        const historyListModal = document.getElementById('history-list-modal');
+        const clearHistoryModalBtn = document.getElementById('clear-history-modal-btn');
+        const historyDetailsModal = document.getElementById('history-details-modal');
+        const closeHistoryDetailsModalBtn = document.getElementById('close-history-details-modal-btn');
+
+
+        loginBtn.addEventListener('click', () => {
+            auth.signInWithPopup(provider)
+                .then((result) => {
+                    // This gives you a Google Access Token. You can use it to access the Google API.
+                    const credential = result.credential;
+                    const token = credential.accessToken;
+                    // The signed-in user info.
+                    const user = result.user;
+                    console.log("User signed in:", user);
+                })
+                .catch((error) => {
+                    // Handle Errors here.
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    // The email of the user's account used.
+                    const email = error.email;
+                    // The firebase.auth.AuthCredential type that was used.
+                    const credential = error.credential;
+                    console.error("Login error:", errorCode, errorMessage);
+                });
+        });
+
+        auth.onAuthStateChanged((user) => {
+            if (user) {
+                // User is signed in.
+                loginContainer.style.display = 'none';
+                mainContent.style.display = 'block';
+                document.getElementById('profile-avatar').src = user.photoURL;
+                modalUserAvatar.src = user.photoURL;
+                modalUserName.textContent = user.displayName;
+                const isPremium = localStorage.getItem('premiumUser') === 'true';
+                document.getElementById('user-type').textContent = isPremium ? 'Premium User' : 'Basic User';
+                displayHistory(); // Fetch and display history on login
+                updateCreditsDisplay();
+            } else {
+                // User is signed out.
+                loginContainer.style.display = 'block';
+                mainContent.style.display = 'none';
+            }
+        });
+
+        logoutBtn.addEventListener('click', () => {
+            auth.signOut();
+        });
+
+        profileBtn.addEventListener('click', () => profileModal.classList.remove('hidden'));
+        historyBtn.addEventListener('click', () => historyModal.classList.remove('hidden'));
+        closeProfileModalBtn.addEventListener('click', () => profileModal.classList.add('hidden'));
+        closeHistoryModalBtn.addEventListener('click', () => historyModal.classList.add('hidden'));
+        clearHistoryModalBtn.addEventListener('click', clearHistory);
+        closeHistoryDetailsModalBtn.addEventListener('click', () => historyDetailsModal.classList.add('hidden'));
+
     </script>
 </body>
 </html>
